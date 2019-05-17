@@ -25,7 +25,7 @@ class UserController(Resource):
         except:
             return {'message': 'Password must be not empty.'}, 403
 
-        user = User.objects(email=data.email).first()
+        user = User.objects(pk=data.email).first()
         if user:
             return {'message': 'User exists.'}, 403
         user = User(email=data.email, name=data.name, password=data.password)
@@ -44,7 +44,7 @@ class UserLoginController(Resource):
 
         data = parser.parse_args()
 
-        user = User.objects(email=data.email).first()
+        user = User.objects(pk=data.email).first()
         if not user:
             return {'message': 'User does not exist.'}, 403
 
@@ -53,11 +53,11 @@ class UserLoginController(Resource):
 
         user = json.loads(user.to_json())
         access_token = create_access_token(identity=user)
-        return {'access_token': access_token}, 200
+        return {'access_token': access_token}
 
 
 class UserProfileController(Resource):
     @jwt_required
     def get(self):
         user = get_jwt_identity()
-        return user, 200
+        return user
