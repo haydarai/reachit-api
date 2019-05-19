@@ -12,6 +12,8 @@ class UserController(Resource):
 
         parser.add_argument('email', required=True, help='Email is required')
         parser.add_argument('name', required=True, help='Name is required.')
+        parser.add_argument('user_type', required=True,
+                            help='User type is required.')
         parser.add_argument('password', required=True,
                             help='Password is required.')
 
@@ -28,8 +30,12 @@ class UserController(Resource):
         user = User.objects(pk=data.email).first()
         if user:
             return {'message': 'User exists.'}, 403
-        user = User(email=data.email, name=data.name, password=data.password)
-        user.save()
+        try:
+            user = User(email=data.email, name=data.name,
+                        user_type=data.user_type, password=data.password)
+            user.save()
+        except Exception:
+            return {'message': "User type has to be 'user' or 'merchant'."}
         user = json.loads(user.to_json())
         return {'message': 'User created.'}, 201
 
