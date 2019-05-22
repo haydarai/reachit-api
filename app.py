@@ -1,3 +1,4 @@
+from api.controllers.promotion_controller import *
 from api.controllers.transaction_controller import *
 from api.controllers.user_controller import *
 from api import create_app
@@ -19,3 +20,6 @@ api.add_resource(UserLoginController, '/users/login')
 api.add_resource(TransactionController, '/users/me/transactions')
 api.add_resource(TransactionDetailController,
                 '/users/me/transactions/<string:transaction_id>')
+api.add_resource(PromotionController, '/promotions')
+api.add_resource(PromotionDetailController,
+                '/promotions/<string:promotion_id>')
