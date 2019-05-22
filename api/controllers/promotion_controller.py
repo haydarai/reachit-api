@@ -21,7 +21,7 @@ class PromotionController(Resource):
     def post(self):
         user = get_jwt_identity()
         if user['user_type'] != 'merchant':
-            return {'message': 'Only merchant can create or update promotion.' }, 400
+            return {'message': 'Only merchant can create promotion.' }, 400
 
         parser = reqparse.RequestParser()
 
@@ -67,7 +67,7 @@ class PromotionDetailController(Resource):
     def put(self, promotion_id):
         user = get_jwt_identity()
         if user['user_type'] != 'merchant':
-            return {'message': 'Only merchant can create or update promotion.' }, 400
+            return {'message': 'Only merchant can update promotion.' }, 400
 
         parser = reqparse.RequestParser()
 
@@ -105,3 +105,15 @@ class PromotionDetailController(Resource):
 
         promotion = json.loads(promotion.to_json())
         return {'promotion': promotion}
+
+    @jwt_required
+    def delete(self, promotion_id):
+        user = get_jwt_identity()
+        if user['user_type'] != 'merchant':
+            return {'message': 'Only merchant can delete promotion.' }, 400
+
+        promotion = Promotion.objects(pk=promotion_id).first()
+        if promotion:
+            promotion.delete()
+
+        return {'message': 'Promotion has been deleted.'}
