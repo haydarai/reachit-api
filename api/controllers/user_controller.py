@@ -4,6 +4,7 @@ from flask_jwt_extended import (
     create_access_token, create_refresh_token, jwt_required, get_jwt_identity)
 import app
 import json
+from datetime import timedelta
 
 
 class UserController(Resource):
@@ -58,6 +59,8 @@ class UserLoginController(Resource):
             return {'message': 'Password does not match.'}, 401
 
         user = json.loads(user.to_json())
+        expires = timedelta(days=30)
+        access_token = create_access_token(identity=user, expires_delta=expires)
         access_token = create_access_token(identity=user)
         return {'access_token': access_token}
 
