@@ -61,7 +61,6 @@ class UserLoginController(Resource):
         user = json.loads(user.to_json())
         expires = timedelta(days=30)
         access_token = create_access_token(identity=user, expires_delta=expires)
-        access_token = create_access_token(identity=user)
         return {'access_token': access_token}
 
 
