@@ -12,9 +12,12 @@ class Item(db.EmbeddedDocument):
 class Transaction(gj.Document):
     user = db.ReferenceField('User')
     items = db.ListField(db.EmbeddedDocumentField(Item))
+    location = db.StringField()
+    city = db.StringField()
+    country = db.StringField()
     created_at = db.DateTimeField(default=datetime.utcnow)
     last_modified_at = db.DateTimeField(default=datetime.utcnow)
-    meta = {'collection': 'transactions'}
+    meta = {'collection': 'transactions', 'shard_key': 'country'}
 
     def save(self, *args, **kwargs):
         self.last_modified_at = datetime.utcnow()
