@@ -8,6 +8,7 @@ class Promotion(gj.Document):
     title = db.StringField(required=True)
     description = db.StringField()
     product_type = db.StringField()
+    image = db.StringField()
     city = db.StringField()
     country = db.StringField()
     start_valid_date = db.DateTimeField(default=datetime.utcnow)

@@ -21,12 +21,13 @@ class PromotionController(Resource):
     def post(self):
         user = get_jwt_identity()
         if user['user_type'] != 'merchant':
-            return {'message': 'Only merchant can create promotion.' }, 400
+            return {'message': 'Only merchant can create promotion.'}, 400
 
         parser = reqparse.RequestParser()
 
         parser.add_argument('title', required=True, help='Title is required')
         parser.add_argument('description')
+        parser.add_argument('image')
         parser.add_argument('start_valid_date')
         parser.add_argument('end_valid_date')
 
@@ -45,7 +46,10 @@ class PromotionController(Resource):
             default_end_valid_date.year = '3019'
             data['end_valid_date'] = default_end_valid_date
 
-        promotion = Promotion(creator=user['id'], title=data.title, description=data.description,
+        if data.image is None:
+            data['image'] = ''
+
+        promotion = Promotion(creator=user['id'], title=data.title, description=data.description, image=data.image,
                             start_valid_date=data.start_valid_date, end_valid_date=data.end_valid_date)
         promotion.save()
         promotion = json.loads(promotion.to_json())
@@ -67,14 +71,19 @@ class PromotionDetailController(Resource):
     def put(self, promotion_id):
         user = get_jwt_identity()
         if user['user_type'] != 'merchant':
-            return {'message': 'Only merchant can update promotion.' }, 400
+            return {'message': 'Only merchant can update promotion.'}, 400
 
         parser = reqparse.RequestParser()
 
         parser.add_argument('title', required=True, help='Title is required')
-        parser.add_argument('description', required=True, help='Description is required')
-        parser.add_argument('start_valid_date', required=True, help='Start valid date is required')
-        parser.add_argument('end_valid_date', required=True, help='End valid date is required')
+        parser.add_argument('description', required=True,
+                            help='Description is required')
+        parser.add_argument('image', required=True,
+                            help='Image is required')
+        parser.add_argument('start_valid_date', required=True,
+                            help='Start valid date is required')
+        parser.add_argument('end_valid_date', required=True,
+                            help='End valid date is required')
 
         data = parser.parse_args()
         try:
@@ -110,7 +119,7 @@ class PromotionDetailController(Resource):
     def delete(self, promotion_id):
         user = get_jwt_identity()
         if user['user_type'] != 'merchant':
-            return {'message': 'Only merchant can delete promotion.' }, 400
+            return {'message': 'Only merchant can delete promotion.'}, 400
 
         promotion = Promotion.objects(pk=promotion_id).first()
         if promotion:
