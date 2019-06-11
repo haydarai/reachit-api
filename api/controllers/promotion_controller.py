@@ -1,3 +1,5 @@
+import os
+from io import BytesIO
 from api.models.promotion_model import Promotion
 from flask_restful import Resource, reqparse
 from flask_jwt_extended import (
@@ -5,6 +7,44 @@ from flask_jwt_extended import (
 )
 from datetime import datetime
 import json
+from werkzeug.datastructures import FileStorage
+import boto
+from boto.s3.connection import S3Connection
+from boto.s3.key import Key as S3Key
+from datetime import timezone, datetime
+
+ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png']
+FILE_CONTENT_TYPES = {  # these will be used to set the content type of S3 object. It is binary by default.
+    'jpg': 'image/jpeg',
+    'jpeg': 'image/jpeg',
+    'png': 'image/png'
+}
+
+
+class FileStorageArgument(reqparse.Argument):
+    def convert(self, value, op):
+        if self.type is FileStorage:
+            return value
+
+        super(FileStorageArgument, self).convert(*args, **kwargs)
+
+
+def upload_s3(file, key_name, content_type, bucket_name):
+    bucket = boto.connect_s3(aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+                            aws_secret_access_key=os.getenv(
+                                'AWS_SECRET_ACCESS_KEY'),
+                            host=os.getenv('AWS_S3_HOST')
+                            ).get_bucket(bucket_name)
+    obj = S3Key(bucket)
+    obj.name = key_name
+    obj.content_type = content_type
+    obj.set_contents_from_string(file.getvalue())
+    obj.set_acl('public-read')
+
+    # close stringio object
+    file.close()
+
+    return obj.generate_url(expires_in=0, query_auth=False)
 
 
 class PromotionController(Resource):
@@ -28,6 +68,7 @@ class PromotionController(Resource):
         parser.add_argument('title', required=True, help='Title is required')
         parser.add_argument('description')
         parser.add_argument('image')
+        parser.add_argument('image', type=FileStorage, location='files')
         parser.add_argument('start_valid_date')
         parser.add_argument('end_valid_date')
 
@@ -43,10 +84,26 @@ class PromotionController(Resource):
                 data['end_valid_date'], '%Y-%m-%d %H:%M:%S')
         except:
             default_end_valid_date = datetime.utcnow()
-            default_end_valid_date = default_end_valid_date.replace(year = 3019)
+            default_end_valid_date = default_end_valid_date.replace(year=3019)
             data['end_valid_date'] = default_end_valid_date
 
-        if data.image is None:
+        if data.image:
+            image = data['image']
+
+            file_name = str(
+                int(datetime.now(tz=timezone.utc).timestamp() * 1000))
+            extension = image.filename.rsplit('.', 1)[1].lower()
+            if '.' in image.filename and not extension in ALLOWED_EXTENSIONS:
+                return {'message': 'File extension is not one of our supported types.'}, 400
+            image_file = BytesIO()
+            image.save(image_file)
+
+            key_name = '{0}.{1}'.format(file_name, extension)
+            content_type = FILE_CONTENT_TYPES[extension]
+            bucket_name = 'reach-it'
+            data['image'] = upload_s3(image_file, key_name,
+                                    content_type, bucket_name)
+        else:
             data['image'] = ''
 
         promotion = Promotion(creator=user['id'], title=data.title, description=data.description, image=data.image,
@@ -104,7 +161,26 @@ class PromotionDetailController(Resource):
         if not promotion:
             return {'message': 'Promotion not found.'}
 
-        promotion.update_one(set__title=data.title, set__description=data.description,
+        if data.image:
+            image = data['image']
+
+            file_name = str(
+                int(datetime.now(tz=timezone.utc).timestamp() * 1000))
+            extension = image.filename.rsplit('.', 1)[1].lower()
+            if '.' in image.filename and not extension in ALLOWED_EXTENSIONS:
+                return {'message': 'File extension is not one of our supported types.'}, 400
+            image_file = BytesIO()
+            image.save(image_file)
+
+            key_name = '{0}.{1}'.format(file_name, extension)
+            content_type = FILE_CONTENT_TYPES[extension]
+            bucket_name = 'reach-it'
+            data['image'] = upload_s3(image_file, key_name,
+                                    content_type, bucket_name)
+        else:
+            data['image'] = promotion['image']
+
+        promotion.update_one(set__title=data.title, set__description=data.description, set__image=dataa['image'],
                             set__start_valid_date=data.start_valid_date, set__end_valid_date=data.end_valid_date)
 
         # Workaround to update last_modified_at
