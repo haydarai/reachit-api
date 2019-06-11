@@ -17,10 +17,37 @@ class TransactionController(Resource):
 
     @jwt_required
     def post(self):
-        data = request.get_json()
-
         user = get_jwt_identity()
-        transaction = Transaction(user=user['id'], items=data['items'])
+        parser = reqparse.RequestParser()
+
+        parser.add_argument('items', required=True,
+                            help='Items list is required')
+        parser.add_argument('location', required=True,
+                            help='Location is required')
+        parser.add_argument('merchant', required=True,
+                            help='Merchant is required')
+        parser.add_argument('city', required=True,
+                            help='City is required')
+        parser.add_argument('country', required=True,
+                            help='Country is required')
+
+        data = parser.parse_args()
+
+        if data['location'] is None:
+            data['location'] = ''
+
+        if data['merchant'] is None:
+            data['merchant'] = ''
+
+        if data['city'] is None:
+            data['city'] = ''
+
+        if data['country'] is None:
+            data['country'] = ''
+
+        transaction = Transaction(
+            user=user['id'], items=data['items'], location=data['location'],
+            merchant=data['merchant'], city=data['city'], country=data['country'])
         transaction.save()
         transaction = json.loads(transaction.to_json())
         return {'transaction': transaction}, 201
@@ -39,15 +66,31 @@ class TransactionDetailController(Resource):
 
     @jwt_required
     def put(self, transaction_id):
-        data = request.get_json()
-
         transaction = Transaction.objects(
             pk=transaction_id)
 
         if not transaction:
             return {'message': 'Transaction not found.'}
 
-        transaction.update_one(set__items=data['items'])
+        parser = reqparse.RequestParser()
+
+        parser.add_argument('items', required=True,
+                            help='Items list is required')
+        parser.add_argument('location', required=True,
+                            help='Location is required')
+        parser.add_argument('merchant', required=True,
+                            help='Merchant is required')
+        parser.add_argument('city', required=True,
+                            help='City is required')
+        parser.add_argument('country', required=True,
+                            help='Country is required')
+
+        data = parser.parse_args()
+
+        transaction.update_one(
+            set__items=data['items'], set__location=data['location'],
+            set__merchant=data['merchant'], set__city=data['city'],
+            set__country=data['country'])
 
         # Workaround to update last_modified_at
         transaction = Transaction.objects(
