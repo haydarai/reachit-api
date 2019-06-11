@@ -43,7 +43,7 @@ class PromotionController(Resource):
                 data['end_valid_date'], '%Y-%m-%d %H:%M:%S')
         except:
             default_end_valid_date = datetime.utcnow()
-            default_end_valid_date.year = '3019'
+            default_end_valid_date = default_end_valid_date.replace(year = 3019)
             data['end_valid_date'] = default_end_valid_date
 
         if data.image is None:
