@@ -62,20 +62,7 @@ class TransactionDetailController(Resource):
         if not transaction:
             return {'message': 'Transaction not found.'}
 
-        parser = reqparse.RequestParser()
-
-        parser.add_argument('items', required=True,
-                            help='Items list is required')
-        parser.add_argument('location', required=True,
-                            help='Location is required')
-        parser.add_argument('merchant', required=True,
-                            help='Merchant is required')
-        parser.add_argument('city', required=True,
-                            help='City is required')
-        parser.add_argument('country', required=True,
-                            help='Country is required')
-
-        data = parser.parse_args()
+        data = request.get_json()
 
         transaction.update_one(
             set__items=data['items'], set__location=data['location'],

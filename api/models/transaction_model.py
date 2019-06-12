@@ -20,7 +20,7 @@ class Transaction(gj.Document):
     created_at = db.DateTimeField(default=datetime.utcnow)
     last_modified_at = db.DateTimeField(default=datetime.utcnow)
     meta = {'collection': 'transactions',
-            'shard_key': 'country', 'indexes': ['user']}
+            'shard_key': ('country',), 'indexes': [{'fields': ['$user']}]}
 
     def save(self, *args, **kwargs):
         self.last_modified_at = datetime.utcnow()
