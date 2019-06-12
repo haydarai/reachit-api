@@ -18,20 +18,10 @@ class TransactionController(Resource):
     @jwt_required
     def post(self):
         user = get_jwt_identity()
-        parser = reqparse.RequestParser()
+        data = request.get_json()
 
-        parser.add_argument('items', required=True,
-                            help='Items list is required')
-        parser.add_argument('location', required=True,
-                            help='Location is required')
-        parser.add_argument('merchant', required=True,
-                            help='Merchant is required')
-        parser.add_argument('city', required=True,
-                            help='City is required')
-        parser.add_argument('country', required=True,
-                            help='Country is required')
-
-        data = parser.parse_args()
+        if data['items'] is None:
+            return {'message': 'Items is required.'}, 400
 
         if data['location'] is None:
             data['location'] = ''
