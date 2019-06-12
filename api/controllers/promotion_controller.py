@@ -100,7 +100,7 @@ class PromotionController(Resource):
 
             key_name = '{0}.{1}'.format(file_name, extension)
             content_type = FILE_CONTENT_TYPES[extension]
-            bucket_name = 'reach-it'
+            bucket_name = os.getenv('AWS_S3_BUCKET_NAME')
             data['image'] = upload_s3(image_file, key_name,
                                     content_type, bucket_name)
         else:
