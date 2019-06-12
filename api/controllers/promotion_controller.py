@@ -68,7 +68,6 @@ class PromotionController(Resource):
 
         parser.add_argument('title', required=True, help='Title is required')
         parser.add_argument('description')
-        parser.add_argument('image')
         parser.add_argument('image', type=FileStorage, location='files')
         parser.add_argument('start_valid_date')
         parser.add_argument('end_valid_date')
@@ -135,7 +134,6 @@ class PromotionDetailController(Resource):
 
         parser.add_argument('title', required=True, help='Title is required')
         parser.add_argument('description')
-        parser.add_argument('image')
         parser.add_argument('image', type=FileStorage, location='files')
         parser.add_argument('start_valid_date')
         parser.add_argument('end_valid_date')
