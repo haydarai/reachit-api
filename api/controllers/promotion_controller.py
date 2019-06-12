@@ -1,6 +1,7 @@
 import os
 from io import BytesIO
 from api.models.promotion_model import Promotion
+from flask import request
 from flask_restful import Resource, reqparse
 from flask_jwt_extended import (
     jwt_required, get_jwt_identity
@@ -133,14 +134,15 @@ class PromotionDetailController(Resource):
         parser = reqparse.RequestParser()
 
         parser.add_argument('title', required=True, help='Title is required')
-        parser.add_argument('description', required=True,
-                            help='Description is required')
-        parser.add_argument('image', required=True,
-                            help='Image is required')
-        parser.add_argument('start_valid_date', required=True,
-                            help='Start valid date is required')
-        parser.add_argument('end_valid_date', required=True,
-                            help='End valid date is required')
+        parser.add_argument('description')
+        parser.add_argument('image')
+        parser.add_argument('image', type=FileStorage, location='files')
+        parser.add_argument('start_valid_date')
+        parser.add_argument('end_valid_date')
+
+        promotion = Promotion.objects(pk=promotion_id)
+        if not promotion:
+            return {'message': 'Promotion not found.'}
 
         data = parser.parse_args()
         try:
@@ -154,12 +156,8 @@ class PromotionDetailController(Resource):
                 data['end_valid_date'], '%Y-%m-%d %H:%M:%S')
         except:
             default_end_valid_date = datetime.utcnow()
-            default_end_valid_date.year = '3019'
+            default_end_valid_date = default_end_valid_date.replace(year=3019)
             data['end_valid_date'] = default_end_valid_date
-
-        promotion = Promotion.objects(pk=promotion_id)
-        if not promotion:
-            return {'message': 'Promotion not found.'}
 
         if data.image:
             image = data['image']

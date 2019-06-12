@@ -15,7 +15,7 @@ class Promotion(gj.Document):
     end_valid_date = db.DateTimeField()
     created_at = db.DateTimeField(default=datetime.utcnow)
     last_modified_at = db.DateTimeField(default=datetime.utcnow)
-    meta = {'collection': 'promotions', 'indexes': ['product_type']}
+    meta = {'collection': 'promotions', 'indexes': [{'fields': ['$product_type']}]}
 
     def save(self, *args, **kwargs):
         self.last_modified_at = datetime.utcnow()
