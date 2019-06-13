@@ -67,11 +67,11 @@ stores_results = sparql.query().convert()
 
 fake = Faker()
 
-random_stores = stores_results['results']['bindings'][0:3]
-random_products = products_results['results']['bindings'][0:100]
-random_categories = categories_results['results']['bindings'][0:3]
+random_stores = stores_results['results']['bindings']
+random_products = products_results['results']['bindings']
+random_categories = categories_results['results']['bindings']
 
-for _ in range(10):
+for _ in range(300):
     email = fake.email()
     name = fake.name()
     user = User.objects(pk=email).first()
@@ -82,13 +82,15 @@ for _ in range(10):
                     user_type='user', password=password)
         user.save()
 
-        t = random.randint(1, 5)
+        t = random.randint(10, 20)
         for __ in range(t):
             picked_store = random.choice(random_stores)
             picked_products = random.choices(random_products, k=t)
             items = []
 
-            for i in range(t):
+            n = random.randint(1, 5)
+
+            for i in range(n):
                 name = picked_products[i]['pn']['value']
                 item = {
                     'name': name,
