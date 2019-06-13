@@ -13,6 +13,7 @@ import boto
 from boto.s3.connection import S3Connection
 from boto.s3.key import Key as S3Key
 from datetime import timezone, datetime
+from app import neo4j_driver
 
 ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png']
 FILE_CONTENT_TYPES = {  # these will be used to set the content type of S3 object. It is binary by default.
@@ -32,10 +33,10 @@ class FileStorageArgument(reqparse.Argument):
 
 def upload_s3(file, key_name, content_type, bucket_name):
     bucket = boto.connect_s3(aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
-                            aws_secret_access_key=os.getenv(
-                                'AWS_SECRET_ACCESS_KEY'),
-                            host=os.getenv('AWS_S3_HOST')
-                            ).get_bucket(bucket_name)
+                             aws_secret_access_key=os.getenv(
+        'AWS_SECRET_ACCESS_KEY'),
+        host=os.getenv('AWS_S3_HOST')
+    ).get_bucket(bucket_name)
     obj = S3Key(bucket)
     obj.name = key_name
     obj.content_type = content_type
@@ -52,11 +53,19 @@ class PromotionController(Resource):
     @jwt_required
     def get(self):
         user = get_jwt_identity()
-        current_time = datetime.utcnow()
-        promotions = Promotion.objects(
-            start_valid_date__lte=current_time, end_valid_date__gte=current_time)
-        promotions = json.loads(promotions.to_json())
-        return {'promotions': promotions}
+        with neo4j_driver.session() as session:
+            types = []
+            result = session.run("""
+                MATCH (u:User)-[getPromotion]-(t:Type) WHERE u.email = {email} RETURN t.typeName AS type ORDER BY u.userName
+            """, email=user['id'])
+            for row in result:
+                types.append(row['type'])
+
+            current_time = datetime.utcnow()
+            promotions = Promotion.objects(
+                product_type__in=types, start_valid_date__lte=current_time, end_valid_date__gte=current_time)
+            promotions = json.loads(promotions.to_json())
+            return {'promotions': promotions}
 
     @jwt_required
     def post(self):
@@ -102,12 +111,12 @@ class PromotionController(Resource):
             content_type = FILE_CONTENT_TYPES[extension]
             bucket_name = os.getenv('AWS_S3_BUCKET_NAME')
             data['image'] = upload_s3(image_file, key_name,
-                                    content_type, bucket_name)
+                                      content_type, bucket_name)
         else:
             data['image'] = ''
 
         promotion = Promotion(creator=user['id'], title=data.title, description=data.description, image=data.image,
-                            start_valid_date=data.start_valid_date, end_valid_date=data.end_valid_date)
+                              start_valid_date=data.start_valid_date, end_valid_date=data.end_valid_date)
         promotion.save()
         promotion = json.loads(promotion.to_json())
         return {'promotion': promotion}, 201
@@ -172,12 +181,12 @@ class PromotionDetailController(Resource):
             content_type = FILE_CONTENT_TYPES[extension]
             bucket_name = 'reach-it'
             data['image'] = upload_s3(image_file, key_name,
-                                    content_type, bucket_name)
+                                      content_type, bucket_name)
         else:
             data['image'] = promotion['image']
 
         promotion.update_one(set__title=data.title, set__description=data.description, set__image=dataa['image'],
-                            set__start_valid_date=data.start_valid_date, set__end_valid_date=data.end_valid_date)
+                             set__start_valid_date=data.start_valid_date, set__end_valid_date=data.end_valid_date)
 
         # Workaround to update last_modified_at
         promotion = Promotion.objects(
