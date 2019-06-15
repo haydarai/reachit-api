@@ -56,6 +56,7 @@ sparql.setQuery("""
     SELECT ?address ?merchantName ?cityName ?countryName
     WHERE {
         ?merchant ri:merchantName ?merchantName .
+        ?merchant ri:has ?store .
         ?store ri:locatedInCity ?city .
         ?city ri:cityName ?cityName .
         ?store ri:storeAddress ?address .
