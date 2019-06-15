@@ -73,6 +73,31 @@ random_stores = stores_results['results']['bindings']
 random_products = products_results['results']['bindings']
 random_categories = categories_results['results']['bindings']
 
+for result in merchants_results['results']['bindings']:
+    merchant_email = 'admin@' + \
+        result['m']['value'].rsplit(
+            '/')[-1].lower().replace('_', '').replace(' ', '') + '.com'
+    merchant_name = result['mn']['value']
+    user = User.objects(pk=merchant_email).first()
+    password = app.bcrypt.generate_password_hash('password').decode('utf-8')
+
+    if not user:
+        user = User(email=merchant_email, name=merchant_name,
+                    user_type='merchant', password=password)
+        user.save()
+
+    k = random.randint(1, 2)
+    for __ in range(k):
+        picked_category = random.choice(random_categories)['pcn']['value']
+        title = fake.sentence()
+        description = fake.paragraph()
+        image = 'https://picsum.photos/500/500'
+        end_valid_date = datetime.utcnow()
+        end_valid_date = end_valid_date.replace(year=3019)
+        promotion = Promotion(creator=merchant_email, product_type=picked_category,
+                              title=title, description=description, image=image, end_valid_date=end_valid_date)
+        promotion.save()
+
 for _ in range(300):
     email = fake.email()
     name = fake.name()
@@ -110,29 +135,3 @@ for _ in range(300):
             transaction = Transaction(
                 user=email, items=items, location=location, merchant=merchant, city=city, country=country)
             transaction.save()
-
-
-for result in merchants_results['results']['bindings']:
-    merchant_email = 'admin@' + \
-        result['m']['value'].rsplit(
-            '/')[-1].lower().replace('_', '').replace(' ', '') + '.com'
-    merchant_name = result['mn']['value']
-    user = User.objects(pk=merchant_email).first()
-    password = app.bcrypt.generate_password_hash('password').decode('utf-8')
-
-    if not user:
-        user = User(email=merchant_email, name=merchant_name,
-                    user_type='merchant', password=password)
-        user.save()
-
-    k = random.randint(1, 2)
-    for __ in range(k):
-        picked_category = random.choice(random_categories)['pcn']['value']
-        title = fake.sentence()
-        description = fake.paragraph()
-        image = 'https://picsum.photos/500/500'
-        end_valid_date = datetime.utcnow()
-        end_valid_date = end_valid_date.replace(year=3019)
-        promotion = Promotion(creator=merchant_email, product_type=picked_category,
-                            title=title, description=description, image=image, end_valid_date=end_valid_date)
-        promotion.save()
