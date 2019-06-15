@@ -13,7 +13,7 @@ import boto
 from boto.s3.connection import S3Connection
 from boto.s3.key import Key as S3Key
 from datetime import timezone, datetime
-from app import neo4j_driver
+# from app import neo4j_driver
 
 ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png']
 FILE_CONTENT_TYPES = {  # these will be used to set the content type of S3 object. It is binary by default.
@@ -52,6 +52,12 @@ def upload_s3(file, key_name, content_type, bucket_name):
 class PromotionController(Resource):
     @jwt_required
     def get(self):
+        neo4j_uri = os.getenv('NEO4J_URL')
+        neo4j_user = os.getenv('NEO4J_USER')
+        neo4j_password = os.getenv('NEO4J_PASSWORD')
+        neo4j_driver = GraphDatabase.driver(
+        neo4j_uri, auth=(neo4j_user, neo4j_password))
+        
         user = get_jwt_identity()
         with neo4j_driver.session() as session:
             types = []
