@@ -13,6 +13,8 @@ import boto
 from boto.s3.connection import S3Connection
 from boto.s3.key import Key as S3Key
 from datetime import timezone, datetime
+from neo4j import GraphDatabase
+
 # from app import neo4j_driver
 
 ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png']
