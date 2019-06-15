@@ -6,6 +6,7 @@ from mongoengine import connect
 from SPARQLWrapper import SPARQLWrapper, JSON
 from faker import Faker
 import random
+from datetime import timezone, datetime
 from dotenv import load_dotenv
 import app
 load_dotenv()
@@ -129,6 +130,8 @@ for result in merchants_results['results']['bindings']:
         title = fake.sentence()
         description = fake.paragraph()
         image = 'https://picsum.photos/500/500'
-        promotion = Promotion(creator=merchant_email,
-                            title=title, description=description, image=image)
+        end_valid_date = datetime.utcnow()
+        end_valid_date = end_valid_date.replace(year=3019)
+        promotion = Promotion(creator=merchant_email, product_type=picked_category,
+                            title=title, description=description, image=image, end_valid_date=end_valid_date)
         promotion.save()

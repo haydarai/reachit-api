@@ -15,8 +15,6 @@ from boto.s3.key import Key as S3Key
 from datetime import timezone, datetime
 from neo4j import GraphDatabase
 
-# from app import neo4j_driver
-
 ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png']
 FILE_CONTENT_TYPES = {  # these will be used to set the content type of S3 object. It is binary by default.
     'jpg': 'image/jpeg',
@@ -58,8 +56,8 @@ class PromotionController(Resource):
         neo4j_user = os.getenv('NEO4J_USER')
         neo4j_password = os.getenv('NEO4J_PASSWORD')
         neo4j_driver = GraphDatabase.driver(
-        neo4j_uri, auth=(neo4j_user, neo4j_password))
-        
+            neo4j_uri, auth=(neo4j_user, neo4j_password))
+
         user = get_jwt_identity()
         with neo4j_driver.session() as session:
             types = []
@@ -71,7 +69,8 @@ class PromotionController(Resource):
 
             current_time = datetime.utcnow()
             promotions = Promotion.objects(
-                product_type__in=types, start_valid_date__lte=current_time, end_valid_date__gte=current_time)
+                # product_type__in=types, #Uncomment this when we fix issue with getting types from Neo4J
+                start_valid_date__lte=current_time, end_valid_date__gte=current_time)
             promotions = json.loads(promotions.to_json())
             return {'promotions': promotions}
 
@@ -119,12 +118,12 @@ class PromotionController(Resource):
             content_type = FILE_CONTENT_TYPES[extension]
             bucket_name = os.getenv('AWS_S3_BUCKET_NAME')
             data['image'] = upload_s3(image_file, key_name,
-                                      content_type, bucket_name)
+                                    content_type, bucket_name)
         else:
             data['image'] = ''
 
         promotion = Promotion(creator=user['id'], title=data.title, description=data.description, image=data.image,
-                              start_valid_date=data.start_valid_date, end_valid_date=data.end_valid_date)
+                            start_valid_date=data.start_valid_date, end_valid_date=data.end_valid_date)
         promotion.save()
         promotion = json.loads(promotion.to_json())
         return {'promotion': promotion}, 201
@@ -189,12 +188,12 @@ class PromotionDetailController(Resource):
             content_type = FILE_CONTENT_TYPES[extension]
             bucket_name = 'reach-it'
             data['image'] = upload_s3(image_file, key_name,
-                                      content_type, bucket_name)
+                                    content_type, bucket_name)
         else:
             data['image'] = promotion['image']
 
         promotion.update_one(set__title=data.title, set__description=data.description, set__image=dataa['image'],
-                             set__start_valid_date=data.start_valid_date, set__end_valid_date=data.end_valid_date)
+                            set__start_valid_date=data.start_valid_date, set__end_valid_date=data.end_valid_date)
 
         # Workaround to update last_modified_at
         promotion = Promotion.objects(
